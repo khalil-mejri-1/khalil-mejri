@@ -433,6 +433,11 @@ const PillNav = ({
         ref={mobileMenuRef}
         style={cssVars}
       >
+        <div className="mobile-menu-header">
+          <span className="mobile-menu-title">Menu</span>
+          <div className="mobile-menu-line-decor" />
+        </div>
+
         <ul className="mobile-menu-list">
           {items.map((item, i) => (
             <li key={item.href || `mobile-item-${i}`}>
@@ -442,17 +447,19 @@ const PillNav = ({
                   className={`mobile-menu-link${activeHref === item.href ? ' is-active' : ''
                     }`}
                   onClick={e => {
-                    // 👈 إغلاق عند الضغط على عنصر داخل القائمة (Link)
                     if (onItemClick) {
                       e.preventDefault();
-                      closeMobileMenu(); // استخدام الدالة الموحدة
+                      closeMobileMenu();
                       setTimeout(() => onItemClick(item.href), 0);
                     } else {
-                      closeMobileMenu(); // استخدام الدالة الموحدة
+                      closeMobileMenu();
                     }
                   }}
                 >
-                  {item.label}
+                  <div className="mobile-link-content">
+                    {item.icon && <span className="mobile-icon">{item.icon}</span>}
+                    <span className="mobile-label">{item.label}</span>
+                  </div>
                 </Link>
               ) : (
                 <a
@@ -460,17 +467,19 @@ const PillNav = ({
                   className={`mobile-menu-link${activeHref === item.href ? ' is-active' : ''
                     }`}
                   onClick={e => {
-                    // 👈 إغلاق عند الضغط على عنصر داخل القائمة (Anchor)
                     if (onItemClick) {
                       e.preventDefault();
-                      closeMobileMenu(); // استخدام الدالة الموحدة
+                      closeMobileMenu();
                       setTimeout(() => onItemClick(item.href), 0);
                     } else {
-                      closeMobileMenu(); // استخدام الدالة الموحدة
+                      closeMobileMenu();
                     }
                   }}
                 >
-                  {item.label}
+                  <div className="mobile-link-content">
+                    {item.icon && <span className="mobile-icon">{item.icon}</span>}
+                    <span className="mobile-label">{item.label}</span>
+                  </div>
                 </a>
               )}
             </li>

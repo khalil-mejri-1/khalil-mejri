@@ -538,10 +538,16 @@ const Contact = ({ darkMode }) => {
                 {socialLinks.map((s) => {
                   const iconDef = SOCIAL_ICON_MAP[s.iconKey];
                   const IconComp = iconDef ? iconDef.component : Globe;
+
+                  // Ensure absolute URL
+                  const url = s.href && (s.href.startsWith('http') || s.href.startsWith('mailto:'))
+                    ? s.href
+                    : `https://${s.href}`;
+
                   return (
                     <a
                       key={s.id}
-                      href={s.href}
+                      href={url}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.label}

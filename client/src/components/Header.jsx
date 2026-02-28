@@ -1,5 +1,6 @@
-import React from "react";
-import { Moon, Sun } from "lucide-react";
+import {
+  Moon, Sun, Home, User, Cpu, Layers, Activity, Mail
+} from "lucide-react";
 import PillNav from './PillNav.jsx';
 
 const Header = ({
@@ -17,30 +18,40 @@ const Header = ({
     }
   };
 
+  const navItems = [
+    { label: 'Home', href: 'home', icon: <Home size={15} /> },
+    { label: 'About', href: 'about', icon: <User size={15} /> },
+    { label: 'Skills', href: 'skills', icon: <Cpu size={15} /> },
+    { label: 'Projects', href: 'projects', icon: <Layers size={15} /> },
+    { label: 'Timeline', href: 'timeline', icon: <Activity size={15} /> },
+    { label: 'Contact', href: 'contact', icon: <Mail size={15} /> },
+  ];
+
   return (
     <header className={`header ${darkMode ? "dark-mode-bg dark-border headerdarkmode" : "light-mode-bg light-border headerlightmode"}`}>
       <nav className="nav-container">
         <div className="header-inner">
 
-          {/* ── Logo ── */}
-          <div className={`logo ${darkMode ? 'dark-text' : 'light-text'}`}>
-            M.khalil
+          <div
+            className="logo-wrap"
+            onClick={() => scrollToSection('home')}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+          >
+            <img
+              src="/logo prot.svg"
+              alt="Logo"
+              className="header-logo-img"
+              style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+            />
+            <span className={`logo-text ${darkMode ? 'dark-text' : 'light-text'}`} style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+              M.khalil
+            </span>
           </div>
 
-          {/*
-           * ── Desktop nav (center flex:1) ──
-           * On mobile → display:none via CSS
-           */}
+          {/* ── Desktop nav ── */}
           <div className={`header-nav-desktop ${darkMode ? 'dark-mode' : 'light-mode'}`}>
             <PillNav
-              items={[
-                { label: 'Home', href: 'home' },
-                { label: 'About', href: 'about' },
-                { label: 'Skills', href: 'skills' },
-                { label: 'Projects', href: 'projects' },
-                { label: 'Timeline', href: 'timeline' },
-                { label: 'Contact', href: 'contact' },
-              ]}
+              items={navItems}
               activeHref="/"
               ease="power2.easeOut"
               darkMode={darkMode}
@@ -52,24 +63,12 @@ const Header = ({
             />
           </div>
 
-          {/*
-           * ── Right section: hamburger (mobile) + toggle button ──
-           * PillNav renders the hamburger button inside pill-nav-container.
-           * We wrap it with the toggle button in a flex row.
-           */}
+          {/* ── Right section ── */}
           <div className={`header-right ${darkMode ? 'dark-mode' : 'light-mode'}`}>
 
-            {/* PillNav here only to render the hamburger + dropdown */}
             <div className="header-hamburger-wrap">
               <PillNav
-                items={[
-                  { label: 'Home', href: 'home' },
-                  { label: 'About', href: 'about' },
-                  { label: 'Skills', href: 'skills' },
-                  { label: 'Projects', href: 'projects' },
-                  { label: 'Timeline', href: 'timeline' },
-                  { label: 'Contact', href: 'contact' },
-                ]}
+                items={navItems}
                 activeHref="/"
                 ease="power2.easeOut"
                 darkMode={darkMode}

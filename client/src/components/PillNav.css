@@ -322,45 +322,46 @@
    ═══════════════════════════════════════════════════════ */
 .mobile-menu-popover {
     position: absolute;
-    top: calc(100% + 10px);
-    /* always 10px below the container */
+    top: calc(100% + 14px);
     right: 0;
-    left: auto;
-    min-width: 200px;
-    width: max-content;
-    border-radius: 20px;
-    z-index: 998;
+    width: 240px;
+    border-radius: 24px;
+    z-index: 1000;
     opacity: 0;
     transform-origin: top right;
     visibility: hidden;
     overflow: hidden;
-    border: 1.5px solid transparent;
+    border: 1px solid transparent;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
 }
 
 /* Dark mode dropdown */
 .mmp-dark {
-    background: #0f0e24;
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(13, 11, 28, 0.95);
+    border-color: rgba(139, 92, 246, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(139, 92, 246, 0.12) inset;
+        0 25px 50px -12px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 /* Light mode dropdown */
 .mmp-light {
-    background: #ffffff;
-    border-color: rgba(99, 102, 241, 0.25);
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(99, 102, 241, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     box-shadow:
-        0 20px 60px rgba(99, 102, 241, 0.2),
+        0 25px 50px -12px rgba(99, 102, 241, 0.15),
         0 0 0 1px rgba(255, 255, 255, 1) inset;
 }
 
 /* Gradient header strip */
-.mmp-dark::before,
-.mmp-light::before {
+.mobile-menu-popover::before {
     content: '';
     display: block;
-    height: 3px;
+    height: 4px;
     width: 100%;
 }
 
@@ -372,96 +373,142 @@
     background: linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4);
 }
 
-/* ── Menu list ── */
+/* ── Menu List & Header ── */
+.mobile-menu-header {
+    padding: 16px 20px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mobile-menu-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.5;
+}
+
+.mmp-dark .mobile-menu-title {
+    color: #a78bfa;
+}
+
+.mmp-light .mobile-menu-title {
+    color: #4338ca;
+}
+
+.mobile-menu-line-decor {
+    height: 1px;
+    width: 30px;
+    background: currentColor;
+    opacity: 0.2;
+}
+
 .mobile-menu-list {
     list-style: none;
     margin: 0;
-    padding: 8px;
+    padding: 8px 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 /* ── Menu links (base) ── */
 .mobile-menu-popover .mobile-menu-link {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 11px 16px;
+    justify-content: space-between;
+    padding: 12px 16px;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    border-radius: 12px;
-    transition: all 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+    border-radius: 14px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     border: 1px solid transparent;
-    white-space: nowrap;
+}
+
+.mobile-link-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: transform 0.3s ease;
+}
+
+.mobile-menu-link:hover .mobile-icon {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 1;
 }
 
 /* ── Dark mode links ── */
 .mmp-dark .mobile-menu-link {
-    color: rgba(196, 181, 253, 0.85);
-}
-
-.mmp-dark .mobile-menu-link::before {
-    content: '→';
-    font-size: 0.75rem;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: all 0.2s ease;
-    color: #a78bfa;
-    flex-shrink: 0;
+    color: rgba(200, 195, 230, 0.82);
 }
 
 .mmp-dark .mobile-menu-link:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
+    background: rgba(139, 92, 246, 0.12);
     color: #fff;
-    border-color: rgba(139, 92, 246, 0.3);
-    box-shadow: 0 3px 12px rgba(139, 92, 246, 0.2);
-}
-
-.mmp-dark .mobile-menu-link:hover::before {
-    opacity: 1;
-    transform: translateX(0);
+    border-color: rgba(139, 92, 246, 0.2);
 }
 
 .mmp-dark .mobile-menu-link.is-active {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.15));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
     color: #c4b5fd;
-    border-color: rgba(139, 92, 246, 0.4);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.mmp-dark .mobile-menu-link::after {
+    content: '→';
+    font-size: 14px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.25s ease;
+    color: #8b5cf6;
+}
+
+.mmp-dark .mobile-menu-link:hover::after,
+.mmp-dark .mobile-menu-link.is-active::after {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 /* ── Light mode links ── */
 .mmp-light .mobile-menu-link {
-    color: rgba(67, 56, 202, 0.85);
-}
-
-.mmp-light .mobile-menu-link::before {
-    content: '→';
-    font-size: 0.75rem;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: all 0.2s ease;
-    color: #6366f1;
-    flex-shrink: 0;
+    color: rgba(30, 27, 75, 0.72);
 }
 
 .mmp-light .mobile-menu-link:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.06));
-    color: #3730a3;
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.12);
-}
-
-.mmp-light .mobile-menu-link:hover::before {
-    opacity: 1;
-    transform: translateX(0);
+    background: rgba(99, 102, 241, 0.06);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.15);
 }
 
 .mmp-light .mobile-menu-link.is-active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.08));
-    color: #3730a3;
-    border-color: rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.04));
+    color: #4338ca;
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.mmp-light .mobile-menu-link::after {
+    content: '→';
+    font-size: 14px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.25s ease;
+    color: #6366f1;
+}
+
+.mmp-light .mobile-menu-link:hover::after,
+.mmp-light .mobile-menu-link.is-active::after {
+    opacity: 1;
+    transform: translateX(0);
 }
