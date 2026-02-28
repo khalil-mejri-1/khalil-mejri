@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Project = require('./models/Project');
-const User = require('./models/User'); // تأكد من المسار الصحيح لموديل المستخدم
+const User = require('./models/User');
+const Section = require('./models/Section'); // 👈 إضافة موديل الأقسام
 const app = express();
 const PORT = 3000;
 
@@ -17,77 +18,98 @@ const MONGODB_URI = 'mongodb+srv://kmejri57:ZKknzSQREfNgLF49@main.2yeijf6.mongod
 
 // Connect to MongoDB then start server
 mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('🎉 Successfully connected to MongoDB!');
+    .then(() => {
+        console.log('🎉 Successfully connected to MongoDB!');
 
-    // Start the server ONLY after MongoDB connects
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        // Start the server ONLY after MongoDB connects
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
-  });
-
-
-
-
-
-
-
-
-
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Hello World with CORS & Nodemon!' });
+    res.json({ message: 'Hello World with CORS & Nodemon!' });
 });
 
+// ── New Dynamic Section Routes ──
+// These handle hero, about, skills, projects-meta, timeline, contact
+app.get('/api/:sectionName', async (req, res) => {
+    try {
+        const { sectionName } = req.params;
+        // Exception for projects which is handled separately
+        if (sectionName === 'projects') {
+            const projects = await Project.find();
+            return res.json(projects);
+        }
 
-
-
-app.post('/api/projects', async (req, res) => {
-  try {
-    const project = await Project.create(req.body);
-    res.json({ success: true, project });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+        const section = await Section.findOne({ name: sectionName });
+        if (!section) {
+            return res.json(null); // Return null if not found yet
+        }
+        res.json(section.data);
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-// GET → Get all projects
+app.post('/api/:sectionName', async (req, res) => {
+    try {
+        const { sectionName } = req.params;
+        const data = req.body;
+
+        // Exception for projects creation
+        if (sectionName === 'projects') {
+            const project = await Project.create(data);
+            return res.json({ success: true, project });
+        }
+
+        const section = await Section.findOneAndUpdate(
+            { name: sectionName },
+            { name: sectionName, data: data },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true, section: section.name });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// GET → Get all projects (Kept for compatibility)
 app.get('/api/projects', async (req, res) => {
-  try {
-    const projects = await Project.find();
-    res.json({ success: true, projects });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    try {
+        const projects = await Project.find();
+        res.json(projects); // Note: changed to return array directly to match frontend expectations
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
-
-
 
 app.post('/admin/login', async (req, res) => {
+    // ...
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Please provide email and password' 
+        return res.status(400).json({
+            success: false,
+            message: 'Please provide email and password'
         });
     }
 
     try {
         // البحث عن المستخدم وإحضار حقل كلمة المرور المشفرة
-        const user = await User.findOne({ email }).select('+password'); 
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid Credentials' });
         }
 
         // مقارنة كلمة المرور
-        const isMatch = await user.comparePassword(password); 
+        const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid Credentials' });
@@ -95,15 +117,15 @@ app.post('/admin/login', async (req, res) => {
 
         // التحقق من دور المسؤول
         if (user.role !== 'admin') {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'Access denied. You are not an administrator.' 
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You are not an administrator.'
             });
         }
 
         // تسجيل الدخول ناجح
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             message: 'Admin login successful',
             user: {
                 id: user._id,
@@ -120,26 +142,26 @@ app.post('/admin/login', async (req, res) => {
 
 
 app.post('/register', async (req, res) => {
-    const { email, password, role } = req.body; 
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Email and password are required.' 
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required.'
         });
     }
 
     try {
         // إنشاء المستخدم مباشرة
-        const user = await User.create({ 
-            email, 
+        const user = await User.create({
+            email,
             password,
             // تعيين الدور: يضمن أن أي قيمة غير 'admin' ترجع إلى القيمة الافتراضية 'user' في المخطط
-            role: role === 'admin' ? 'admin' : undefined 
+            role: role === 'admin' ? 'admin' : undefined
         });
 
-        res.status(201).json({ 
-            success: true, 
+        res.status(201).json({
+            success: true,
             message: 'User created successfully.',
             user: {
                 id: user._id,
@@ -156,7 +178,7 @@ app.post('/register', async (req, res) => {
                 message: 'This email is already registered.'
             });
         }
-        
+
         console.error(error);
         res.status(500).json({ success: false, message: 'Server error: Could not save the user.' });
     }
@@ -164,9 +186,9 @@ app.post('/register', async (req, res) => {
 
 
 
-app.get('/check-role/:email', async (req, res) => { 
+app.get('/check-role/:email', async (req, res) => {
     // الآن نستقبل البريد من req.params
-    const email = req.params.email; 
+    const email = req.params.email;
 
     if (!email) {
         return res.status(400).json({ success: false, isAdmin: false, message: 'Email is required.' });
@@ -181,8 +203,8 @@ app.get('/check-role/:email', async (req, res) => {
 
         const isAdmin = user.role === 'admin';
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             isAdmin: isAdmin,
             message: isAdmin ? 'User is an admin.' : 'User is not an admin.'
         });
@@ -204,8 +226,8 @@ app.put('/api/projects/:id', async (req, res) => {
         // يمكنك هنا إضافة تحقق من صلاحية المسؤول مرة أخرى قبل التعديل
 
         const project = await Project.findByIdAndUpdate(
-            projectId, 
-            updateData, 
+            projectId,
+            updateData,
             { new: true, runValidators: true } // {new: true} لإرجاع المستند المحدث، {runValidators: true} لتطبيق قواعد الـ Schema
         );
 
@@ -229,7 +251,7 @@ app.put('/api/projects/:id', async (req, res) => {
 app.delete('/api/projects/:id', async (req, res) => {
     try {
         const projectId = req.params.id;
-        
+
         // يمكنك هنا إضافة تحقق من صلاحية المسؤول مرة أخرى قبل الحذف
 
         const result = await Project.findByIdAndDelete(projectId);

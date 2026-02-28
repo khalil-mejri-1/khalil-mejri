@@ -2,27 +2,61 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import './LiquidEther.css';
 
-export default function LiquidEther({
-  mouseForce = 20,
-  cursorSize = 100,
-  isViscous = false,
-  viscous = 30,
-  iterationsViscous = 32,
-  iterationsPoisson = 32,
-  dt = 0.014,
-  BFECC = true,
-  resolution = 0.5,
-  isBounce = false,
-  colors = ['#5227FF', '#FF9FFC', '#B19EEF'],
-  style = {},
-  className = '',
-  autoDemo = true,
-  autoSpeed = 0.5,
-  autoIntensity = 2.2,
-  takeoverDuration = 0.25,
-  autoResumeDelay = 1000,
-  autoRampDuration = 0.6
-}) {
+// ⚠️ إعدادات افتراضية مناسبة للحاسوب
+const DEFAULT_PROPS = {
+  mouseForce: 20,
+  cursorSize: 100,
+  isViscous: false,
+  viscous: 30,
+  iterationsViscous: 32,
+  iterationsPoisson: 32,
+  dt: 0.014,
+  BFECC: true,
+  resolution: 0.5,
+  isBounce: false,
+  colors: ['#5227FF', '#FF9FFC', '#B19EEF'],
+  autoDemo: true,
+  autoSpeed: 0.5,
+  autoIntensity: 2.2,
+  takeoverDuration: 0.25,
+  autoResumeDelay: 1, // ثواني
+  autoRampDuration: 0
+};
+
+// ⚡ إعدادات مخفّضة لأقصى سرعة على الهاتف
+const MOBILE_OVERRIDE = {
+  resolution: 0.25, 
+  iterationsViscous: 8, 
+  iterationsPoisson: 8,
+  cursorSize: 50, 
+  mouseForce: 10, 
+};
+
+export default function LiquidEther(props) {
+  
+  // 1. تحديد ما إذا كان الجهاز هاتفًا (بناءً على عرض الشاشة في البداية)
+  // نستخدم (props.resolution < 0.5) كإشارة إضافية إذا كانت الخصائص مُعدّلة مسبقًا
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // 2. تطبيق الخصائص: استخدام الخصائص الممررة، مع تطبيق التخفيضات إذا كان هاتفًا
+  const finalProps = { ...DEFAULT_PROPS, ...props };
+  if (isMobileDevice) {
+      Object.assign(finalProps, MOBILE_OVERRIDE);
+      finalProps.resolution = Math.min(finalProps.resolution, MOBILE_OVERRIDE.resolution);
+      finalProps.iterationsPoisson = Math.min(finalProps.iterationsPoisson, MOBILE_OVERRIDE.iterationsPoisson);
+      finalProps.iterationsViscous = Math.min(finalProps.iterationsViscous, MOBILE_OVERRIDE.iterationsViscous);
+  }
+
+  const {
+      mouseForce, cursorSize, isViscous, viscous, iterationsViscous, iterationsPoisson,
+      dt, BFECC, resolution, isBounce, colors, style, className, autoDemo,
+      autoSpeed, autoIntensity, takeoverDuration, autoResumeDelay, autoRampDuration
+  } = finalProps;
+
+  // تحويل التأخيرات من ثواني إلى مللي ثانية (MS)
+  const autoResumeDelayMs = autoResumeDelay * 1000;
+  const autoRampDurationMs = autoRampDuration * 1000;
+
   const mountRef = useRef(null);
   const webglRef = useRef(null);
   const resizeObserverRef = useRef(null);
@@ -73,10 +107,6 @@ export default function LiquidEther({
         this.height = 0;
         this.aspect = 1;
         this.pixelRatio = 1;
-        this.isMobile = false;
-        this.breakpoint = 768;
-        this.fboWidth = null;
-        this.fboHeight = null;
         this.time = 0;
         this.delta = 0;
         this.container = null;
@@ -264,7 +294,7 @@ export default function LiquidEther({
         this.enabled = opts.enabled;
         this.speed = opts.speed; // normalized units/sec
         this.resumeDelay = opts.resumeDelay || 3000; // ms
-        this.rampDurationMs = (opts.rampDuration || 0) * 1000;
+        this.rampDurationMs = opts.rampDurationMs || 0; // ms
         this.active = false;
         this.current = new THREE.Vector2(0, 0);
         this.target = new THREE.Vector2();
@@ -767,15 +797,18 @@ export default function LiquidEther({
         this.boundarySpace = new THREE.Vector2();
         this.init();
       }
+
       init() {
         this.calcSize();
         this.createAllFBO();
         this.createShaderPass();
       }
+
+      // ⚠️ الإصلاح الأساسي لتوافق WebGL على الجوال: استخدام HalfFloatType
       getFloatType() {
-        const isIOS = /(iPad|iPhone|iPod)/i.test(navigator.userAgent);
-        return isIOS ? THREE.HalfFloatType : THREE.FloatType;
+        return THREE.HalfFloatType;
       }
+
       createAllFBO() {
         const type = this.getFloatType();
         const opts = {
@@ -883,11 +916,25 @@ export default function LiquidEther({
     }
 
     class Output {
-      constructor() {
+      // ⚠️ استقبال الخصائص كمعامل (argument)
+      constructor(options) {
+        this.options = options;
         this.init();
       }
       init() {
-        this.simulation = new Simulation();
+        // ⚠️ تمرير الخصائص المستقبلة إلى Simulation
+        this.simulation = new Simulation({
+            iterations_poisson: this.options.iterationsPoisson,
+            iterations_viscous: this.options.iterationsViscous,
+            resolution: this.options.resolution,
+            mouse_force: this.options.mouseForce,
+            cursor_size: this.options.cursorSize,
+            viscous: this.options.viscous,
+            isBounce: this.options.isBounce,
+            dt: this.options.dt,
+            isViscous: this.options.isViscous,
+            BFECC: this.options.BFECC
+        });
         this.scene = new THREE.Scene();
         this.camera = new THREE.Camera();
         this.output = new THREE.Mesh(
@@ -938,8 +985,8 @@ export default function LiquidEther({
         this.autoDriver = new AutoDriver(Mouse, this, {
           enabled: props.autoDemo,
           speed: props.autoSpeed,
-          resumeDelay: props.autoResumeDelay,
-          rampDuration: props.autoRampDuration
+          resumeDelay: props.autoResumeDelayMs,
+          rampDurationMs: props.autoRampDurationMs
         });
         this.init();
         this._loop = this.loop.bind(this);
@@ -958,7 +1005,8 @@ export default function LiquidEther({
       }
       init() {
         this.props.$wrapper.prepend(Common.renderer.domElement);
-        this.output = new Output();
+        // ⚠️ تمرير الخصائص من WebGLManager إلى Output
+        this.output = new Output(this.props); 
       }
       resize() {
         Common.resize();
@@ -1007,22 +1055,37 @@ export default function LiquidEther({
     container.style.position = container.style.position || 'relative';
     container.style.overflow = container.style.overflow || 'hidden';
 
-    const webgl = new WebGLManager({
+    // ⚠️ تجميع جميع الخصائص في كائن واحد ليتم تمريره إلى WebGLManager
+    const webglProps = {
       $wrapper: container,
       autoDemo,
       autoSpeed,
       autoIntensity,
       takeoverDuration,
-      autoResumeDelay,
-      autoRampDuration
-    });
+      autoResumeDelayMs,
+      autoRampDurationMs,
+      // تمرير خصائص المحاكاة (التي تم تعديلها لأجل الجوال)
+      iterationsPoisson,
+      iterationsViscous,
+      resolution,
+      mouseForce,
+      cursorSize,
+      viscous,
+      isBounce,
+      dt,
+      BFECC
+    };
+
+    const webgl = new WebGLManager(webglProps);
     webglRef.current = webgl;
 
     const applyOptionsFromProps = () => {
       if (!webglRef.current) return;
-      const sim = webglRef.current.output?.simulation;
+      const sim = webgl.output?.simulation;
       if (!sim) return;
       const prevRes = sim.options.resolution;
+
+      // تطبيق الخصائص المحدثة من React props
       Object.assign(sim.options, {
         mouse_force: mouseForce,
         cursor_size: cursorSize,
@@ -1035,6 +1098,7 @@ export default function LiquidEther({
         resolution,
         isBounce
       });
+
       if (resolution !== prevRes) {
         sim.resize();
       }
@@ -1074,6 +1138,7 @@ export default function LiquidEther({
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
       if (resizeObserverRef.current) {
         try {
           resizeObserverRef.current.disconnect();
@@ -1110,7 +1175,9 @@ export default function LiquidEther({
     autoIntensity,
     takeoverDuration,
     autoResumeDelay,
-    autoRampDuration
+    autoRampDuration,
+    autoResumeDelayMs,
+    autoRampDurationMs
   ]);
 
   useEffect(() => {
@@ -1119,6 +1186,8 @@ export default function LiquidEther({
     const sim = webgl.output?.simulation;
     if (!sim) return;
     const prevRes = sim.options.resolution;
+
+    // تحديث إعدادات المحاكاة
     Object.assign(sim.options, {
       mouse_force: mouseForce,
       cursor_size: cursorSize,
@@ -1131,16 +1200,19 @@ export default function LiquidEther({
       resolution,
       isBounce
     });
+
+    // تحديث إعدادات وضع العرض التلقائي
     if (webgl.autoDriver) {
       webgl.autoDriver.enabled = autoDemo;
       webgl.autoDriver.speed = autoSpeed;
-      webgl.autoDriver.resumeDelay = autoResumeDelay;
-      webgl.autoDriver.rampDurationMs = autoRampDuration * 1000;
+      webgl.autoDriver.resumeDelay = autoResumeDelayMs;
+      webgl.autoDriver.rampDurationMs = autoRampDurationMs;
       if (webgl.autoDriver.mouse) {
         webgl.autoDriver.mouse.autoIntensity = autoIntensity;
         webgl.autoDriver.mouse.takeoverDuration = takeoverDuration;
       }
     }
+
     if (resolution !== prevRes) {
       sim.resize();
     }
@@ -1159,8 +1231,8 @@ export default function LiquidEther({
     autoSpeed,
     autoIntensity,
     takeoverDuration,
-    autoResumeDelay,
-    autoRampDuration
+    autoResumeDelayMs,
+    autoRampDurationMs
   ]);
 
   return <div ref={mountRef} className={`liquid-ether-container ${className || ''}`} style={style} />;

@@ -32,7 +32,8 @@
 
 .pc-card-wrapper {
   perspective: 500px;
-  transform: translate3d(0, 0, 0.1px);
+  /* استخدام translateZ(0) لضمان تسريع الأجهزة */
+  transform: translateZ(0);
   position: relative;
   touch-action: none;
 }
@@ -47,9 +48,12 @@
     var(--behind-glow-color) 0%,
     transparent var(--behind-glow-size)
   );
+  /* تقليل قيمة Blur لتخفيف الضغط على الأداء، خاصة على الهاتف */
   filter: blur(50px) saturate(1.1);
   opacity: calc(0.8 * var(--card-opacity));
   transition: opacity 200ms ease;
+  /* إضافة will-change */
+  will-change: opacity, filter;
 }
 
 .pc-card-wrapper:hover,
@@ -58,7 +62,6 @@
 }
 
 .pc-card {
-    
   height: 80svh;
   max-height: 540px;
   display: grid;
@@ -76,6 +79,8 @@
   margin: auto;
   margin-top: 50px;
   overflow: hidden;
+  /* إضافة will-change */
+  will-change: transform, box-shadow;
 }
 
 .pc-card:hover,
@@ -105,7 +110,8 @@
   position: absolute;
   background-image: var(--inner-gradient);
   background-color: rgba(0, 0, 0, 0.9);
-  transform: none;
+  /* تأكد من استخدام translateZ(0) أو translate3d(0, 0, 0) لـ pc-inside */
+  transform: translateZ(0);
 }
 
 .pc-shine {
@@ -119,13 +125,16 @@
   animation: holo-bg 18s linear infinite;
   animation-play-state: running;
   mix-blend-mode: color-dodge;
+  /* إضافة will-change */
+  will-change: filter, background-position;
 }
 
 .pc-shine,
 .pc-shine::after {
   --space: 5%;
   --angle: -45deg;
-  transform: translate3d(0, 0, 1px);
+  /* التأكد من تسريع الأجهزة */
+  transform: translateZ(1px);
   overflow: hidden;
   z-index: 3;
   background: transparent;
@@ -177,6 +186,8 @@
   grid-area: 1/1;
   opacity: 0;
   transition: opacity 0.8s ease;
+  /* التأكد من تسريع الأجهزة */
+  transform: translateZ(0); 
 }
 
 .pc-card:hover .pc-shine,
@@ -238,7 +249,8 @@
 }
 
 .pc-glare {
-  transform: translate3d(0, 0, 1.1px);
+  /* التأكد من تسريع الأجهزة */
+  transform: translateZ(1.1px);
   overflow: hidden;
   background-image: radial-gradient(
     farthest-corner circle at var(--pointer-x) var(--pointer-y),
@@ -248,24 +260,30 @@
   mix-blend-mode: overlay;
   filter: brightness(0.8) contrast(1.2);
   z-index: 4;
+  /* إضافة will-change */
+  will-change: background-image, filter;
 }
 
 .pc-avatar-content {
   mix-blend-mode: luminosity;
   overflow: visible;
-  transform: translateZ(2);
+  /* تحويل translateZ(2) إلى translateZ(2px) ليكون صحيحًا */
+  transform: translateZ(2px);
   backface-visibility: hidden;
+  /* إضافة will-change */
+  will-change: transform;
 }
 
 .pc-avatar-content .avatar {
   width: 100%;
   position: absolute;
   margin-top: 0;
-height: 100%;
+  height: 100%;
   left: 50%;
   transform-origin: 50% 100%;
-  transform: translateX(calc(-50% + (var(--pointer-from-left) - 0.5) * 6px)) translateZ(0)
-    scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.01));
+  /* تم تعديل هذا السطر! تقليل تأثير التدوير الطفيف إلى 0.5x */
+  transform: translateX(calc(-50% + (var(--pointer-from-left) * 3px) - 1.5px)) translateZ(0)
+    scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.01)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.005));
 
   backface-visibility: hidden;
   will-change: transform;
@@ -298,6 +316,8 @@ height: 100%;
   border-radius: calc(max(0px, var(--card-radius) - var(--ui-inset) + var(--ui-radius-bias)));
   padding: 12px 14px;
   pointer-events: auto;
+  /* إضافة will-change */
+  will-change: backdrop-filter;
 }
 
 .pc-user-details {
@@ -352,6 +372,7 @@ height: 100%;
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
+  pointer-events: auto; /* التأكد من أن الزر قابل للنقر */
 }
 
 .pc-contact-btn:hover {
@@ -365,13 +386,12 @@ height: 100%;
   overflow: hidden;
   text-align: center;
   position: relative;
-  transform: translate3d(
-    calc(var(--pointer-from-left) * -6px + 3px),
-    calc(var(--pointer-from-top) * -6px + 3px),
-    0.1px
-  );
+  /* التأكد من تسريع الأجهزة وإلغاء التحريك الطفيف لتقليل التكلفة الرسومية */
+  transform: translateZ(0.1px); 
   z-index: 5;
   mix-blend-mode: luminosity;
+  /* إضافة will-change */
+  will-change: transform;
 }
 
 .pc-details {
@@ -435,10 +455,35 @@ height: 100%;
   }
 }
 
+/* 🚀 تحسين الأداء على الهاتف المحمول (إضافة تحسينات الأداء هنا) */
 @media (max-width: 768px) {
   .pc-card {
     height: 70svh;
     max-height: 450px;
+  }
+
+  .pc-behind {
+    /* تقليل شدة Blur لتقليل تكلفة إعادة الرسم */
+    filter: blur(10px) saturate(1.1); 
+  }
+  
+  .pc-shine {
+    /* تبسيط الفلتر ووضع خلط أقل تكلفة على الهاتف */
+    filter: brightness(0.9) contrast(1.1) saturate(0.5) opacity(0.8);
+    mix-blend-mode: soft-light;
+    /* إيقاف الرسوم المتحركة للخلفية لتقليل العمليات */
+    animation-play-state: paused; 
+  }
+
+  .pc-glare {
+    /* تبسيط الفلتر ووضع خلط أقل تكلفة على الهاتف */
+    filter: brightness(1) contrast(1.1);
+    mix-blend-mode: soft-light;
+  }
+  
+  .pc-avatar-content .avatar {
+    /* إلغاء تأثير التحريك الطفيف للصورة الرمزية لتقليل الضغط على الأداء */
+    transform: translateX(-50%) translateZ(0) scaleY(1) scaleX(1); 
   }
 
   .pc-details {

@@ -8,7 +8,9 @@ const ANIMATION_CONFIG = {
   INITIAL_X_OFFSET: 70,
   INITIAL_Y_OFFSET: 60,
   DEVICE_BETA_OFFSET: 20,
-  ENTER_TRANSITION_MS: 180
+  ENTER_TRANSITION_MS: 180,
+  // 💡 تم تعديل هذا الثابت: يفضل أن تكون الحساسية أقل على الأجهزة المحمولة
+  DEFAULT_MOBILE_TILT_SENSITIVITY: 2 
 };
 
 const clamp = (v, min = 0, max = 100) => Math.min(Math.max(v, min), max);
@@ -26,7 +28,8 @@ const ProfileCardComponent = ({
   className = '',
   enableTilt = true,
   enableMobileTilt = false,
-  mobileTiltSensitivity = 5,
+  // 💡 تحديد قيمة افتراضية أقل لحساسية الميلان على الهاتف
+  mobileTiltSensitivity = ANIMATION_CONFIG.DEFAULT_MOBILE_TILT_SENSITIVITY,
   miniAvatarUrl,
   name = 'M.khalil Mejri',
   title = 'Software Engineer',
@@ -55,7 +58,8 @@ const ProfileCardComponent = ({
     let targetY = 0;
 
     const DEFAULT_TAU = 0.14;
-    const INITIAL_TAU = 0.6;
+    // 💡 تم تقليل قيمة Initial TAU إلى 0.45 لجعل الانتقال الأولي أسرع وأخف
+    const INITIAL_TAU = 0.45;
     let initialUntil = 0;
 
     const setVarsFromXY = (x, y) => {
@@ -80,8 +84,9 @@ const ProfileCardComponent = ({
         '--pointer-from-center': `${clamp(Math.hypot(percentY - 50, percentX - 50) / 50, 0, 1)}`,
         '--pointer-from-top': `${percentY / 100}`,
         '--pointer-from-left': `${percentX / 100}`,
-        '--rotate-x': `${round(-(centerX / 5))}deg`,
-        '--rotate-y': `${round(centerY / 4)}deg`
+        // 💡 تم تقليل زاوية الدوران قليلًا لتقليل التوتر البصري
+        '--rotate-x': `${round(-(centerX / 7))}deg`,
+        '--rotate-y': `${round(centerY / 6)}deg`
       };
 
       for (const [k, v] of Object.entries(properties)) wrap.style.setProperty(k, v);
@@ -90,9 +95,11 @@ const ProfileCardComponent = ({
     const step = ts => {
       if (!running) return;
       if (lastTs === 0) lastTs = ts;
+      // 💡 استخدام dt بحذر: استخدام dt/1000 للحصول على فرق الوقت بالثواني
       const dt = (ts - lastTs) / 1000;
       lastTs = ts;
-
+      
+      // 💡 استخدام قيمة أقل لـ tau عند البدء (مثل 0.45) يجعل الاستجابة الأولية أسرع 
       const tau = ts < initialUntil ? INITIAL_TAU : DEFAULT_TAU;
       const k = 1 - Math.exp(-dt / tau);
 
@@ -101,9 +108,10 @@ const ProfileCardComponent = ({
 
       setVarsFromXY(currentX, currentY);
 
-      const stillFar = Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05;
+      // 💡 تقليل عتبة الاستقرار (0.05) إلى 0.1، قد يساعد في الإيقاف بشكل أسرع
+      const stillFar = Math.abs(targetX - currentX) > 0.1 || Math.abs(targetY - currentY) > 0.1;
 
-      if (stillFar || document.hasFocus()) {
+      if (stillFar /* || document.hasFocus() */) {
         rafId = requestAnimationFrame(step);
       } else {
         running = false;
@@ -154,6 +162,7 @@ const ProfileCardComponent = ({
     };
   }, [enableTilt]);
 
+  // ... (getOffsets تبقى كما هي)
   const getOffsets = (evt, el) => {
     const rect = el.getBoundingClientRect();
     return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
@@ -163,7 +172,9 @@ const ProfileCardComponent = ({
     event => {
       const shell = shellRef.current;
       if (!shell || !tiltEngine) return;
-      const { x, y } = getOffsets(event, shell);
+      // استخدام event.touches[0] للتعامل مع اللمس على الهاتف
+      const clientEvent = event.touches ? event.touches[0] : event;
+      const { x, y } = getOffsets(clientEvent, shell);
       tiltEngine.setTarget(x, y);
     },
     [tiltEngine]
@@ -181,12 +192,14 @@ const ProfileCardComponent = ({
         shell.classList.remove('entering');
       }, ANIMATION_CONFIG.ENTER_TRANSITION_MS);
 
-      const { x, y } = getOffsets(event, shell);
+      const clientEvent = event.touches ? event.touches[0] : event;
+      const { x, y } = getOffsets(clientEvent, shell);
       tiltEngine.setTarget(x, y);
     },
     [tiltEngine]
   );
-
+  
+  // ... (handlePointerLeave تبقى كما هي)
   const handlePointerLeave = useCallback(() => {
     const shell = shellRef.current;
     if (!shell || !tiltEngine) return;
@@ -195,6 +208,7 @@ const ProfileCardComponent = ({
 
     const checkSettle = () => {
       const { x, y, tx, ty } = tiltEngine.getCurrent();
+      // 💡 زيادة عتبة الاستقرار إلى 0.6 لجعل البطاقة تعود للمركز بشكل أسرع (تقليل التشنج)
       const settled = Math.hypot(tx - x, ty - y) < 0.6;
       if (settled) {
         shell.classList.remove('active');
@@ -214,12 +228,16 @@ const ProfileCardComponent = ({
 
       const { beta, gamma } = event;
       if (beta == null || gamma == null) return;
-
+      
       const centerX = shell.clientWidth / 2;
       const centerY = shell.clientHeight / 2;
-      const x = clamp(centerX + gamma * mobileTiltSensitivity, 0, shell.clientWidth);
+      
+      // 💡 التأكد من أن mobileTiltSensitivity يستخدم القيمة المحدثة
+      const currentSensitivity = mobileTiltSensitivity;
+
+      const x = clamp(centerX + gamma * currentSensitivity, 0, shell.clientWidth);
       const y = clamp(
-        centerY + (beta - ANIMATION_CONFIG.DEVICE_BETA_OFFSET) * mobileTiltSensitivity,
+        centerY + (beta - ANIMATION_CONFIG.DEVICE_BETA_OFFSET) * currentSensitivity,
         0,
         shell.clientHeight
       );
@@ -228,7 +246,8 @@ const ProfileCardComponent = ({
     },
     [tiltEngine, mobileTiltSensitivity]
   );
-
+  
+  // ... (useEffect تبقى كما هي)
   useEffect(() => {
     if (!enableTilt || !tiltEngine) return;
 
@@ -239,10 +258,17 @@ const ProfileCardComponent = ({
     const pointerEnterHandler = handlePointerEnter;
     const pointerLeaveHandler = handlePointerLeave;
     const deviceOrientationHandler = handleDeviceOrientation;
-
+    
+    // إضافة معالجات اللمس لأداء أفضل على الهاتف
     shell.addEventListener('pointerenter', pointerEnterHandler);
     shell.addEventListener('pointermove', pointerMoveHandler);
     shell.addEventListener('pointerleave', pointerLeaveHandler);
+    
+    // دعم اللمس للتحريك: pointerdown، pointerup، pointercancel
+    shell.addEventListener('touchstart', pointerEnterHandler);
+    shell.addEventListener('touchmove', pointerMoveHandler);
+    shell.addEventListener('touchend', pointerLeaveHandler);
+    shell.addEventListener('touchcancel', pointerLeaveHandler);
 
     const handleClick = () => {
       if (!enableMobileTilt || location.protocol !== 'https:') return;
@@ -272,6 +298,13 @@ const ProfileCardComponent = ({
       shell.removeEventListener('pointerenter', pointerEnterHandler);
       shell.removeEventListener('pointermove', pointerMoveHandler);
       shell.removeEventListener('pointerleave', pointerLeaveHandler);
+      
+      // إزالة معالجات اللمس
+      shell.removeEventListener('touchstart', pointerEnterHandler);
+      shell.removeEventListener('touchmove', pointerMoveHandler);
+      shell.removeEventListener('touchend', pointerLeaveHandler);
+      shell.removeEventListener('touchcancel', pointerLeaveHandler);
+      
       shell.removeEventListener('click', handleClick);
       window.removeEventListener('deviceorientation', deviceOrientationHandler);
       if (enterTimerRef.current) window.clearTimeout(enterTimerRef.current);
@@ -294,8 +327,9 @@ const ProfileCardComponent = ({
       '--icon': iconUrl ? `url(${iconUrl})` : 'none',
       '--grain': grainUrl ? `url(${grainUrl})` : 'none',
       '--inner-gradient': innerGradient ?? DEFAULT_INNER_GRADIENT,
-      '--behind-glow-color': behindGlowColor ?? 'rgba(25, 25, 26, 0.67)',
-      '--behind-glow-size': behindGlowSize ?? '50%'
+      // 💡 تغيير القيمة الافتراضية هنا لتكون أغمق وأقل وهجًا
+      '--behind-glow-color': behindGlowColor ?? 'rgba(25, 25, 26, 0.4)', 
+      '--behind-glow-size': behindGlowSize ?? '40%'
     }),
     [iconUrl, grainUrl, innerGradient, behindGlowColor, behindGlowSize]
   );

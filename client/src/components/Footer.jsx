@@ -7,7 +7,7 @@ const Footer = ({ darkMode }) => {
   };
 
   return (
-    <footer className={`py-12 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'} border-t`}>
+    <footer className={`py-12 ${darkMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'} border-t`}>
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between">
           {/* Copyright */}

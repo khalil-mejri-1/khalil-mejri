@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { X, Save, Edit } from 'lucide-react'; 
+import { X, Save, Edit } from 'lucide-react';
+import { API_URLS } from '../apiConfig';
 
-const API_URL = 'http://localhost:3000/api/projects'; 
+const API_URL = API_URLS.PROJECTS;
 
 // يستقبل initialData (بيانات المشروع المراد تعديله) و refreshProjects (لتحديث القائمة)
 export default function AddProject({ isOpen, onClose, darkMode, initialData, refreshProjects }) {
-    
+
     if (!isOpen) return null;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,16 +18,16 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
         description: '',
         liveDemo: '',
         github: '',
-        technologies: '', 
-        image: '',        
+        technologies: '',
+        image: '',
         featured: false,
     });
-    
+
     // 💡 خطاف useEffect لتحميل البيانات الأولية عند فتح النموذج للتعديل
     useEffect(() => {
         if (initialData) {
-            const techString = Array.isArray(initialData.technologies) 
-                ? initialData.technologies.join(', ') 
+            const techString = Array.isArray(initialData.technologies)
+                ? initialData.technologies.join(', ')
                 : initialData.technologies || '';
 
             setProjectData({
@@ -36,11 +37,11 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
         } else {
             // إعادة تعيين النموذج في وضع الإضافة
             setProjectData({
-                title: '', description: '', liveDemo: '', github: '', 
+                title: '', description: '', liveDemo: '', github: '',
                 technologies: '', image: '', featured: false,
             });
         }
-    }, [initialData, isOpen]); 
+    }, [initialData, isOpen]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -48,7 +49,7 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
         }));
-        setSubmitError(null); 
+        setSubmitError(null);
     };
 
     const handleSubmit = async (e) => {
@@ -77,13 +78,13 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
 
             if (response.data.success) {
                 alert(`Project ${isEditing ? 'updated' : 'created'} successfully!`);
-                
+
                 // تحديث قائمة المشاريع في المكون الأب
                 if (refreshProjects) {
-                    refreshProjects(); 
+                    refreshProjects();
                 }
 
-                onClose(); 
+                onClose();
             } else {
                 setSubmitError(response.data.message || `Failed to ${isEditing ? 'update' : 'create'} project.`);
             }
@@ -96,10 +97,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
         }
     };
 
-    const modalClasses = darkMode 
+    const modalClasses = darkMode
         ? "bg-gray-900 text-white border border-gray-700"
         : "bg-white text-gray-900 shadow-2xl";
-    
+
     const inputClasses = darkMode
         ? "w-full p-3 border border-gray-700 rounded-lg bg-gray-800 text-white focus:ring-purple-500 focus:border-purple-500"
         : "w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500";
@@ -109,15 +110,15 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
     const submitButtonIcon = initialData ? <Edit size={20} /> : <Save size={20} />;
 
     return (
-        <div 
+        <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm"
-            onClick={onClose} 
+            onClick={onClose}
         >
-            <div 
+            <div
                 className={`relative w-full max-w-lg p-8 mx-4 rounded-xl transform transition-all duration-300 scale-100 ${modalClasses}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                
+
                 <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-700">
                     <h2 className="text-2xl font-bold">{formTitle}</h2>
                     <button onClick={onClose} className={`p-2 rounded-full transition-colors ${darkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-200'}`}>
@@ -134,29 +135,29 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    
+
                     {/* ... (حقول Title, Description, Live Demo, GitHub) ... */}
-                    
+
                     {/* حقل العنوان */}
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium mb-1">Project Title</label>
-                        <input 
-                            type="text" 
-                            name="title" 
-                            id="title" 
+                        <input
+                            type="text"
+                            name="title"
+                            id="title"
                             value={projectData.title}
                             onChange={handleChange}
                             required
                             className={inputClasses}
                         />
                     </div>
-                    
+
                     {/* حقل الوصف */}
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
-                        <textarea 
-                            name="description" 
-                            id="description" 
+                        <textarea
+                            name="description"
+                            id="description"
                             value={projectData.description}
                             onChange={handleChange}
                             rows="3"
@@ -169,10 +170,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="liveDemo" className="block text-sm font-medium mb-1">Live Demo URL</label>
-                            <input 
-                                type="url" 
-                                name="liveDemo" 
-                                id="liveDemo" 
+                            <input
+                                type="url"
+                                name="liveDemo"
+                                id="liveDemo"
                                 value={projectData.liveDemo}
                                 onChange={handleChange}
                                 className={inputClasses}
@@ -180,10 +181,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                         </div>
                         <div>
                             <label htmlFor="github" className="block text-sm font-medium mb-1">GitHub URL</label>
-                            <input 
-                                type="url" 
-                                name="github" 
-                                id="github" 
+                            <input
+                                type="url"
+                                name="github"
+                                id="github"
                                 value={projectData.github}
                                 onChange={handleChange}
                                 className={inputClasses}
@@ -194,10 +195,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                     {/* حقل التقنيات */}
                     <div>
                         <label htmlFor="technologies" className="block text-sm font-medium mb-1">Technologies (comma separated)</label>
-                        <input 
-                            type="text" 
-                            name="technologies" 
-                            id="technologies" 
+                        <input
+                            type="text"
+                            name="technologies"
+                            id="technologies"
                             value={projectData.technologies}
                             onChange={handleChange}
                             required
@@ -209,10 +210,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                     {/* حقل رابط الصورة */}
                     <div>
                         <label htmlFor="image" className="block text-sm font-medium mb-1">Project Image URL</label>
-                        <input 
-                            type="url" 
-                            name="image" 
-                            id="image" 
+                        <input
+                            type="url"
+                            name="image"
+                            id="image"
                             value={projectData.image}
                             onChange={handleChange}
                             className={inputClasses}
@@ -222,10 +223,10 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
 
                     {/* خيار Featured */}
                     <div className="flex items-center">
-                        <input 
-                            id="featured" 
-                            name="featured" 
-                            type="checkbox" 
+                        <input
+                            id="featured"
+                            name="featured"
+                            type="checkbox"
                             checked={projectData.featured}
                             onChange={handleChange}
                             className={`h-4 w-4 rounded text-purple-600 focus:ring-purple-500 ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300'}`}
@@ -238,14 +239,13 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
 
                     {/* زر الإرسال */}
                     <div className="pt-4 flex justify-end">
-                        <button 
+                        <button
                             type="submit"
-                            disabled={isSubmitting} 
-                            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-colors duration-300 shadow-lg ${
-                                isSubmitting 
-                                ? 'bg-gray-500 cursor-not-allowed' 
-                                : 'bg-purple-600 text-white hover:bg-purple-700'
-                            }`}
+                            disabled={isSubmitting}
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-colors duration-300 shadow-lg ${isSubmitting
+                                ? 'bg-gray-500 cursor-not-allowed'
+                                : 'btn-primary-gradient text-white'
+                                }`}
                         >
                             {submitButtonIcon}
                             <span>{isSubmitting ? 'Processing...' : submitButtonText}</span>
@@ -253,7 +253,7 @@ export default function AddProject({ isOpen, onClose, darkMode, initialData, ref
                     </div>
 
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

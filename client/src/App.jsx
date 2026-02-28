@@ -16,19 +16,29 @@ import AdminLogin from './components/AdminLogin.jsx';
 // 👈🏻 تعريف مكون منفصل يضم جميع مكونات الصفحة الرئيسية
 const MainPortfolio = ({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenuOpen }) => (
   <>
-    <Header 
-      darkMode={darkMode} 
+    <Header
+      darkMode={darkMode}
       toggleDarkMode={toggleDarkMode}
       mobileMenuOpen={mobileMenuOpen}
       setMobileMenuOpen={setMobileMenuOpen}
     />
     <Hero darkMode={darkMode} />
-    <About darkMode={darkMode} />
-    <Skills darkMode={darkMode} />
-    <Projects darkMode={darkMode} />
-    <Timeline darkMode={darkMode} />
-    <Contact darkMode={darkMode} />
-    <br /><br />
+
+    {/* ── Shared background: About / Skills / Projects / Journey / Contact ── */}
+    <div className={`shared-bg-wrapper ${darkMode ? 'shared-bg-dark' : 'shared-bg-light'}`}>
+      {/* Shared decorative orbs rendered once */}
+      <div className="shared-orb shared-orb-tl" />
+      <div className="shared-orb shared-orb-tr" />
+      <div className="shared-orb shared-orb-mid" />
+      <div className="shared-orb shared-orb-br" />
+
+      <About darkMode={darkMode} />
+      <Skills darkMode={darkMode} />
+      <Projects darkMode={darkMode} />
+      <Timeline darkMode={darkMode} />
+      <Contact darkMode={darkMode} />
+    </div>
+
     <Footer darkMode={darkMode} />
   </>
 );
@@ -63,26 +73,25 @@ function App() {
         sparkCount={8}
         duration={400}
       >
-        <div className={`min-h-screen transition-colors duration-300 ${
-          darkMode ? 'bg-gray-900' : 'bg-white'
-        }`}>
+        <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-black' : 'bg-white'
+          }`}>
 
           <Routes>
             {/* المسار الافتراضي (/) لعرض جميع مكونات البورتفوليو */}
-            <Route 
-              path="/" 
-              element={<MainPortfolio 
-                darkMode={darkMode} 
+            <Route
+              path="/"
+              element={<MainPortfolio
+                darkMode={darkMode}
                 toggleDarkMode={toggleDarkMode}
                 mobileMenuOpen={mobileMenuOpen}
                 setMobileMenuOpen={setMobileMenuOpen}
-              />} 
+              />}
             />
-            
+
             {/* المسار /admin لعرض صفحة تسجيل الدخول فقط */}
-            <Route 
-              path="/admin_khalil" 
-              element={<AdminLogin darkMode={darkMode} />} 
+            <Route
+              path="/admin"
+              element={<AdminLogin darkMode={darkMode} />}
             />
           </Routes>
 
